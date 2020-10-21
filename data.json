@@ -1,0 +1,56 @@
+{
+	"prompts": [
+		"In {#setting}, {#character} {#method} and becomes {#form}.",
+		"{#character} in {#setting} {#method} and is isekai'd as a result, becoming {#form} in {#setting}."
+	],
+	"lists": {
+		"setting": {
+			"name": "Setting",
+			"options": [
+				"a cyberpunk dystopia",
+				"a ghost town in the middle of the desert",
+				"a generic suburb",
+				"the middle of the ocean"
+			]
+		},
+		"character": {
+			"name": "Character",
+			"options": [
+				"a miserable accountant",
+				"a happy-go-lucky balloon salesman",
+				"a professional minecrafter",
+				"the most depressed teenager you have literally ever seen"
+			]
+		},
+		"method": {
+			"name": "Transformation Method",
+			"options": [
+				"gets swallowed by a whale",
+				"gets hit by a truck",
+				"plays too many video games",
+				"gets bitten by a vampire",
+				"falls into a vat of toxic waste",
+				"wears affirming clothes as 'crossdressing' one too many times"
+			]
+		},
+		"form": {
+			"name": "New Form",
+			"options": [
+				"{an orange|a silver|a black|a colourful}-furred kitsune with {1|2|3|4|5|6|7|8|9} tails",
+				"a vampire",
+				"a fae{? (but way {#height} than normal)}",
+				"a catperson",
+				"a mermaid",
+				"a lamia",
+				"a dryad",
+				"an AI"
+			]
+		},
+		"height": {
+			"options": [
+				"shorter",
+				"taller"
+			]
+		}
+	}
+}
