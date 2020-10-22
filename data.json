@@ -10,7 +10,19 @@
 				"a cyberpunk dystopia",
 				"a ghost town in the middle of the desert",
 				"a generic suburb",
-				"the middle of the ocean"
+				"the middle of the ocean",
+				"a college campus",
+				"the big city",
+				"an abandoned mansion",
+				"an intelligent spaceship",
+				"a deserted island",
+				"an imposing castle",
+				"a dragon's lair",
+				"a galaxy far, far away",
+				"an average high school",
+				"a city of superheroes",
+				"a parallel universe",
+				"a VRMMO"
 			]
 		},
 		"character": {
@@ -19,7 +31,24 @@
 				"a miserable accountant",
 				"a happy-go-lucky balloon salesman",
 				"a professional minecrafter",
-				"the most depressed teenager you have literally ever seen"
+				"the most depressed teenager you have literally ever seen",
+				"a bisexual computer programmer",
+				"a conservative pundit",
+				"a closeted middle-aged crossdresser",
+				"a high-school quarterback",
+				"a male ballet dancer",
+				"a constantly daydreaming weeb",
+				"a shy college freshman",
+				"an elderly person near the end of their life",
+				"an internet troll",
+				"an annoying younger sibling",
+				"an androgynous teen with a beautiful singing voice",
+				"a grizzled veteran adventurer",
+				"a superhero vigilante",
+				"a baby-faced cowboy",
+				"an ordinary, unremarkable high schooler with a plain face and black hair",
+				"an inexperienced spellcaster",
+				"a monster-slaying paladin"
 			]
 		},
 		"method": {
@@ -30,7 +59,18 @@
 				"plays too many video games",
 				"gets bitten by a vampire",
 				"falls into a vat of toxic waste",
-				"wears affirming clothes as 'crossdressing' one too many times"
+				"wears affirming clothes as 'crossdressing' one too many times",
+				"is slowly transformed by magic",
+				"starts taking hormones",
+				"crossdresses because of a bet",
+				"crossdresses for Halloween",
+				"accidentally takes the wrong potion",
+				"puts on a high-tech bodysuit",
+				"accidentally gets the wrong surgery",
+				"is transformed by a goddess",
+				"gets turned into a demon by a summoned succubus",
+				"wears a magical amulet",
+				"uploads their consciousness into a android/gynoid"
 			]
 		},
 		"form": {
@@ -40,10 +80,19 @@
 				"a vampire",
 				"a fae{? (but way {#height} than normal)}",
 				"a catperson",
-				"a mermaid",
+				"a merperson",
 				"a lamia",
 				"a dryad",
-				"an AI"
+				"an AI",
+				"an ordinary human of the opposite assigned sex",
+				"a cheerleader",
+				"a sex robot",
+				"the most beautiful woman or man in the world",
+				"a housewife or househusband",
+				"a famous cosplayer",
+				"an e-girl or e-boy",
+				"an elf",
+				"an axoltol person"
 			]
 		},
 		"height": {
