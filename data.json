@@ -39,16 +39,16 @@
 				"a male ballet dancer",
 				"a constantly daydreaming weeb",
 				"a shy college freshman",
-				"an elderly man near the end of his life",
+				"an elderly person near the end of their life",
 				"an internet troll",
-				"an annoying younger brother",
+				"an annoying younger sibling",
 				"an androgynous teen with a beautiful singing voice",
 				"a grizzled veteran adventurer",
 				"a superhero vigilante",
 				"a baby-faced cowboy",
 				"an ordinary, unremarkable high schooler with a plain face and black hair",
 				"an inexperienced spellcaster",
-				"a monster-slaying paladin",
+				"a monster-slaying paladin"
 			]
 		},
 		"method": {
@@ -63,14 +63,14 @@
 				"is slowly transformed by magic",
 				"starts taking hormones",
 				"crossdresses because of a bet",
-				"dresses as a girl for Halloween",
+				"crossdresses for Halloween",
 				"accidentally takes the wrong potion",
 				"puts on a high-tech bodysuit",
 				"accidentally gets the wrong surgery",
 				"is transformed by a goddess",
-				"gets turned into a demon girl by a summoned succubus",
+				"gets turned into a demon by a summoned succubus",
 				"wears a magical amulet",
-				"uploads their consciousness into a gynoid"
+				"uploads their consciousness into a android/gynoid"
 			]
 		},
 		"form": {
@@ -80,19 +80,19 @@
 				"a vampire",
 				"a fae{? (but way {#height} than normal)}",
 				"a catperson",
-				"a mermaid",
+				"a merperson",
 				"a lamia",
 				"a dryad",
 				"an AI",
-				"an ordinary girl",
+				"an ordinary human of the opposite assigned sex",
 				"a cheerleader",
 				"a sex robot",
-				"the most beautiful woman in the world",
-				"a housewife",
+				"the most beautiful woman or man in the world",
+				"a housewife or househusband",
 				"a famous cosplayer",
-				"an e-girl",
+				"an e-girl or e-boy",
 				"an elf",
-				"an axoltol girl"
+				"an axoltol person"
 			]
 		},
 		"height": {
