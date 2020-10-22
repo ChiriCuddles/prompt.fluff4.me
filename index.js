@@ -1,4 +1,4 @@
-document.documentElement.style.setProperty("filter", `hue-rotate(${Math.floor(Math.random() * 360)}deg)`);
+
 
 const promptOutput = document.getElementById("prompt");
 const rerollLink = document.getElementById("reroll");
@@ -19,6 +19,10 @@ let data;
 	rerollLink.addEventListener("click", generate);
 	copyLink.addEventListener("click", copy);
 })();
+
+function randomiseHue () {
+	document.documentElement.style.setProperty("filter", `hue-rotate(${Math.floor(Math.random() * 360)}deg)`);
+}
 
 async function copy () {
 	await navigator.clipboard.writeText(promptOutput.textContent);
@@ -49,6 +53,7 @@ function generate (event) {
 		return;
 
 	promptOutput.textContent = sentence(interpolate(choice(data.prompts)).result);
+	randomiseHue();
 }
 
 /**
