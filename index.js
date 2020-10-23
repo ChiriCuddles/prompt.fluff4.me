@@ -1,12 +1,9 @@
-
-
 const promptOutput = document.getElementById("prompt");
 const rerollLink = document.getElementById("reroll");
 const copyLink = document.getElementById("copy");
 const footer = document.getElementsByTagName("footer")[0];
-const historyLink = document.getElementById("view-history");
-const historySidebar = document.getElementById("history");
 const mainWrapper = document.getElementsByTagName("main")[0];
+const historySidebar = document.getElementById("history");
 
 /**
  * @typedef {{ name?: string, options: string[] }} List
@@ -14,33 +11,47 @@ const mainWrapper = document.getElementsByTagName("main")[0];
  * @type {Data}
  */
 let data;
+/**
+ * @type {InterpolatedText[]}
+ */
+let prompts;
 
 (async function () {
 	data = await fetch("data.json").then(response => response.json());
+	prompts = data.prompts.map(prompt => new InterpolatedText(prompt));
+
 	generate();
 	document.body.addEventListener("click", generate);
-	rerollLink.addEventListener("click", generate);
-	copyLink.addEventListener("click", copy);
-	historyLink.addEventListener("click", toggleHistory);
+	rerollLink?.addEventListener("click", generate);
+	copyLink?.addEventListener("click", copy);
+	for (const toggleLink of elements("[data-toggle]"))
+		toggleLink.addEventListener("click", toggleAside);
 })();
 
-function toggleHistory () {
-	mainWrapper.classList.toggle("viewing-history");
-}
+/**
+ * @param {MouseEvent} target 
+ */
+function toggleAside (target) {
+	const toggleLink = element(target);
 
-function randomiseHue () {
-	const angle = Math.floor(Math.random() * 360);
-	document.documentElement.style.setProperty("--background-color", `#${hueRotate("2c2244", angle)}`);
-	document.documentElement.style.setProperty("--text-color", `#${hueRotate("bb83d3", angle)}`);
-	document.documentElement.style.setProperty("--hover-color", `#${hueRotate("d9a9ee", angle)}`);
+	const sidebarId = toggleLink?.dataset.toggle || "";
+	const sidebarElement = document.getElementById(sidebarId);
+	if (!sidebarElement || !toggleLink) {
+		console.warn("Sidebar element not found:", sidebarId);
+		return;
+	}
+
+	mainWrapper.classList.toggle("viewing-aside", toggleLink.classList.toggle("open", sidebarElement.classList.toggle("open")));
+	for (const otherSidebarOrToggleLinkElement of elements("aside, [data-toggle]"))
+		if (otherSidebarOrToggleLinkElement !== sidebarElement && otherSidebarOrToggleLinkElement !== toggleLink)
+			otherSidebarOrToggleLinkElement.classList.remove("open");
 }
 
 /**
  * @param {MouseEvent} event 
  */
 async function copy (event) {
-	const target = /** @type {HTMLElement} */ (event.target);
-	await navigator.clipboard.writeText(target.textContent);
+	await navigator.clipboard.writeText(element(event)?.textContent || "");
 
 	const notif = document.createElement("h4");
 	notif.classList.add("notification");
@@ -53,26 +64,70 @@ async function copy (event) {
 }
 
 /**
- * @param {number} ms
+ * @type {InterpolatedText[]}
  */
-async function sleep (ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+const promptHistory = [];
 
 /**
  * @param {MouseEvent} [event]
  */
 function generate (event) {
-	const target = /** @type {HTMLElement} */ (event?.target);
-	if (target?.closest("a"))
+	if (!promptOutput || element(event)?.closest("a"))
 		return;
+
+	const prompt = choice(prompts).cloneRandom();
+	promptOutput.innerHTML = ""; // TODO perf
+	renderInterpolatedContent(promptOutput, prompt);
 
 	const historyItem = document.createElement("a");
 	historyItem.href = "#";
-	historyItem.addEventListener("click", copy);
-	historyItem.textContent = promptOutput.textContent = sentence(interpolate(choice(data.prompts)).result);
-	historySidebar.insertBefore(historyItem, historySidebar.firstChild);
+	historyItem.addEventListener("click", focusHistoryItem);
+	historyItem.textContent = sentence(prompt.compile());
+
+	historySidebar?.insertBefore(historyItem, historySidebar.firstChild);
 	randomiseHue();
+}
+
+/**
+ * @param {HTMLElement} wrapperElement
+ * @param {Segment | string | (Segment | string)[]} segment 
+ */
+function renderInterpolatedContent (wrapperElement, segment) {
+	let segmentElement = document.createElement("span");
+	if (typeof segment === "string") {
+		segmentElement.textContent = segment;
+
+	} else if (Array.isArray(segment)) {
+		for (const subSegment of segment)
+			renderInterpolatedContent(wrapperElement, subSegment);
+
+	} else {
+		renderInterpolatedContent(segmentElement, segment.value);
+		if (segment instanceof Randomiser && segment.options.length > 1) {
+			const editLink = document.createElement("a");
+			editLink.classList.add("edit");
+			editLink.href = "#";
+			editLink.innerHTML = "✏&#xFE0F;";
+			editLink.setAttribute("aria-label", `edit ${segment.name ?? `"${segmentElement.textContent}"`}`);
+			editLink.addEventListener("click", editRandomisedSegment);
+
+			const wrapperSegmentElement = document.createElement("span");
+			wrapperSegmentElement.classList.add("editable-wrapper");
+			wrapperSegmentElement.append(editLink, segmentElement);
+			segmentElement = wrapperSegmentElement;
+		}
+	}
+
+	if (segmentElement.textContent?.length)
+		wrapperElement.appendChild(segmentElement);
+}
+
+function focusHistoryItem () {
+	throw new Error("Unimplemented");
+}
+
+function editRandomisedSegment () {
+	throw new Error("Unimplemented");
 }
 
 /**
@@ -83,7 +138,8 @@ function sentence (sentence) {
 }
 
 /**
- * @param {string[]} options 
+ * @template T
+ * @param {T[]} options 
  */
 function choice (options) {
 	return options[Math.floor(Math.random() * options.length)];
@@ -96,75 +152,12 @@ function chance (chance = 0.5) {
 	return Math.random() < chance;
 }
 
-/**
- * @param {string} str 
- */
-function interpolate (str, i = 0) {
-	let result = "";
-
-	for (; i < str.length; i++) {
-		if (str[i] === "}") {
-			return { result, i };
-		}
-
-		if (str[i] === "{") {
-			i++;
-			if (str[i] === "?") {
-				const optionalResult = interpolate(str, ++i);
-				if (chance())
-					result += optionalResult.result;
-				i = optionalResult.i;
-
-				continue;
-
-			} else {
-				const optionsResult = parseOptions(str, i);
-				i = optionsResult.i;
-
-				const option = choice(optionsResult.options);
-				if (option[0] !== "#") {
-					result += option;
-					continue;
-				}
-
-				const endIndex = option.indexOf("}");
-				if (endIndex > -1)
-					i += endIndex;
-
-				const listId = option.slice(1, endIndex === -1 ? undefined : endIndex);
-				const list = data.lists[listId];
-				result += list ? interpolate(choice(list.options)).result
-					: `{NOT FOUND ${listId}}`;
-			}
-
-			continue;
-		}
-
-		result += str[i];
-	}
-
-	return { result, i };
-}
-
-/**
- * @param {string} str 
- * @param {number} i 
- */
-function parseOptions (str, i) {
-	let options = [""];
-	for (; i < str.length; i++) {
-		if (str[i] === "}")
-			break;
-
-		if (str[i] === "|") {
-			options.push("");
-			continue;
-		}
-
-		options[options.length - 1] += str[i];
-	}
-
-	return { options, i };
+function randomiseHue () {
+	const angle = Math.floor(Math.random() * 360);
+	document.documentElement.style.setProperty("--hue-angle", `${angle}deg`);
+	document.documentElement.style.setProperty("--background-color", `#${hueRotate("2c2244", angle)}`);
+	document.documentElement.style.setProperty("--text-color", `#${hueRotate("bb83d3", angle)}`);
+	document.documentElement.style.setProperty("--hover-color", `#${hueRotate("d9a9ee", angle)}`);
 }
 
 /**
@@ -223,4 +216,211 @@ function hueRotate (color, angle) {
  */
 function clamp (num) {
 	return Math.round(Math.max(0, Math.min(255, num)));
+}
+
+/**
+ * @param {Event | string} [eventOrSelector]
+ */
+function element (eventOrSelector) {
+	const result = typeof eventOrSelector === "string" ? document.querySelector(eventOrSelector) : eventOrSelector?.target;
+	return /** @type {HTMLElement | undefined} */ (result);
+}
+
+/**
+ * @param {string} selector 
+ */
+function elements (selector) {
+	return /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll(selector));
+}
+
+/**
+ * @param {number} ms
+ */
+async function sleep (ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * @typedef {{ readonly value: Segment | string | (Segment | string)[], cloneRandom(): Segment }} Segment
+ * @implements {Segment} 
+ */
+class InterpolatedText {
+	/**
+	 * @param {string} str 
+	 */
+	constructor (str, i = 0) {
+		/**
+		 * @type {number}
+		 */
+		this.length;
+		/**
+		 * @private
+		 * @type {(Segment | string)[]}
+		 */
+		this._value;
+
+		/**
+		 * @type {(Segment | string)[]}
+		 */
+		const result = [];
+
+		for (; i < str.length; i++) {
+			if (str[i] === "}") {
+				break;
+			}
+
+			if (str[i] === "{") {
+				i++;
+				if (str[i] === "?") {
+					const optionalResult = new InterpolatedText(str, ++i);
+					result.push(new Randomiser(["", optionalResult]));
+					i = optionalResult.length;
+					continue;
+
+				} else {
+					const optionsResult = parseOptions(str, i);
+					i = optionsResult.i;
+
+					result.push(new Randomiser(optionsResult.options.map(option => {
+						if (option[0] !== "#")
+							return option
+
+						const endIndex = option.indexOf("}");
+						if (endIndex > -1)
+							i += endIndex;
+
+						const listId = option.slice(1, endIndex === -1 ? undefined : endIndex);
+						const list = data.lists[listId];
+						if (!list)
+							return `{NOT FOUND ${listId}}`;
+
+						else
+							return new Randomiser(list.options.map(option => new InterpolatedText(option)), list.name);
+					})));
+				}
+
+				continue;
+			}
+
+			if (typeof result[result.length - 1] !== "string")
+				result.push("");
+
+			result[result.length - 1] += str[i];
+		}
+
+		this._value = result;
+		this.length = i;
+	}
+
+	/**
+	 * @returns {(Segment | string)[]}
+	 */
+	get value () {
+		return this._value;
+	}
+
+	cloneRandom () {
+		const result = new InterpolatedText("");
+		result._value = cloneSegments(this.value);
+		result.length = this.length;
+		return result;
+	}
+
+	compile () {
+		return compileSegments(this._value);
+	}
+}
+
+/**
+ * @param {(Segment | string)[]} segments 
+ * @returns {string}
+ */
+function compileSegments (segments) {
+	return segments.map(compileSegment).join("");
+}
+
+/**
+ * @param {Segment | string | (Segment | string)[]} segment
+ * @returns {string}
+ */
+function compileSegment (segment) {
+	if (typeof segment === "string")
+		return segment;
+
+	if (Array.isArray(segment))
+		return compileSegments(segment);
+
+	return compileSegment(segment.value);
+}
+
+/**
+ * @param {(Segment | string)[]} segments
+ * @returns {(Segment | string)[]}
+ */
+function cloneSegments (segments) {
+	return segments.map(cloneSegment);
+}
+
+/**
+ * @template {string | Segment | (Segment | string)[]} T
+ * @param {T} segment 
+ */
+function cloneSegment (segment) {
+	return /** @type {T} */ (typeof segment === "string" ? segment
+		: Array.isArray(segment) ? cloneSegments(/** @type {(Segment | string)[]} */(segment))
+			: (/** @type {Segment} */ (segment)).cloneRandom());
+}
+
+/**
+ * @implements {Segment}
+ */
+class Randomiser {
+	/**
+	 * @param {(Segment | string)[]} options 
+	 * @param {string} [name]
+	 */
+	constructor (options, name) {
+		/**
+		 * @readonly
+		 */
+		this.options = options;
+		/**
+		 * @readonly
+		 */
+		this.name = name;
+		/**
+		 * @type {Segment | string}
+		 */
+		this.value;
+		this.randomise();
+	}
+
+	randomise () {
+		return this.value = choice(this.options);
+	}
+
+	cloneRandom () {
+		return new Randomiser(this.options.map(cloneSegment), this.name);
+	}
+}
+
+/**
+ * @param {string} str 
+ * @param {number} i 
+ */
+function parseOptions (str, i) {
+	let options = [""];
+	for (; i < str.length; i++) {
+		if (str[i] === "}")
+			break;
+
+		if (str[i] === "|") {
+			options.push("");
+			continue;
+		}
+
+		options[options.length - 1] += str[i];
+	}
+
+	return { options, i };
 }

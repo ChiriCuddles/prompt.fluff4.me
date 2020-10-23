@@ -2,7 +2,8 @@
 	"compilerOptions": {
 		"target": "esnext",
 		"checkJs": true,
-		"allowJs": true
+		"allowJs": true,
+		"strict": true
 	},
 	"include": ["index.js"]
 }
