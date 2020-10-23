@@ -72,12 +72,12 @@ const promptHistory = [];
  * @param {MouseEvent} [event]
  */
 function generate (event) {
-	if (!promptOutput || element(event)?.closest("a"))
+	if (element(event)?.closest("a"))
 		return;
 
 	const prompt = choice(prompts).cloneRandom();
-	promptOutput.innerHTML = ""; // TODO perf
-	renderInterpolatedContent(promptOutput, prompt);
+	promptHistory.push(prompt);
+	renderPrompt(prompt);
 
 	const historyItem = document.createElement("a");
 	historyItem.href = "#";
@@ -85,24 +85,37 @@ function generate (event) {
 	historyItem.textContent = sentence(prompt.compile());
 
 	historySidebar?.insertBefore(historyItem, historySidebar.firstChild);
-	randomiseHue();
+}
+
+/**
+ * @param {InterpolatedText} prompt
+ */
+function renderPrompt (prompt) {
+	if (!promptOutput)
+		return;
+
+	setHue(prompt.randomNumber);
+	promptOutput.innerHTML = ""; // TODO perf
+	renderInterpolatedContent(promptOutput, prompt, true);
 }
 
 /**
  * @param {HTMLElement} wrapperElement
  * @param {Segment | string | (Segment | string)[]} segment 
  */
-function renderInterpolatedContent (wrapperElement, segment) {
+function renderInterpolatedContent (wrapperElement, segment, useSentenceCase = false) {
 	let segmentElement = document.createElement("span");
 	if (typeof segment === "string") {
-		segmentElement.textContent = segment;
+		segmentElement.textContent = useSentenceCase ? sentence(segment) : segment;
 
 	} else if (Array.isArray(segment)) {
-		for (const subSegment of segment)
-			renderInterpolatedContent(wrapperElement, subSegment);
+		for (const subSegment of segment) {
+			renderInterpolatedContent(wrapperElement, subSegment, useSentenceCase);
+			useSentenceCase = false;
+		}
 
 	} else {
-		renderInterpolatedContent(segmentElement, segment.value);
+		renderInterpolatedContent(segmentElement, segment.value, useSentenceCase);
 		if (segment instanceof Randomiser && segment.options.length > 1) {
 			const editLink = document.createElement("a");
 			editLink.classList.add("edit");
@@ -122,8 +135,19 @@ function renderInterpolatedContent (wrapperElement, segment) {
 		wrapperElement.appendChild(segmentElement);
 }
 
-function focusHistoryItem () {
-	throw new Error("Unimplemented");
+/**
+ * @param {Event} event 
+ */
+function focusHistoryItem (event) {
+	const historyItemLink = element(event);
+	if (!historyItemLink?.parentElement)
+		return;
+
+	const index = historyItemLink.parentElement.childElementCount - [...historyItemLink.parentElement.children].indexOf(historyItemLink) - 1;
+	const [prompt] = promptHistory.splice(index, 1);
+	promptHistory.push(prompt);
+	historyItemLink.parentElement.insertBefore(historyItemLink, historyItemLink.parentElement.firstChild);
+	renderPrompt(prompt);
 }
 
 function editRandomisedSegment () {
@@ -152,8 +176,11 @@ function chance (chance = 0.5) {
 	return Math.random() < chance;
 }
 
-function randomiseHue () {
-	const angle = Math.floor(Math.random() * 360);
+/**
+ * @param {number} randomNumber A number between 0 and 1 (exclusive)
+ */
+function setHue (randomNumber) {
+	const angle = Math.floor(randomNumber * 360);
 	document.documentElement.style.setProperty("--hue-angle", `${angle}deg`);
 	document.documentElement.style.setProperty("--background-color", `#${hueRotate("2c2244", angle)}`);
 	document.documentElement.style.setProperty("--text-color", `#${hueRotate("bb83d3", angle)}`);
@@ -249,6 +276,8 @@ class InterpolatedText {
 	 * @param {string} str 
 	 */
 	constructor (str, i = 0) {
+		this.randomNumber = Math.random();
+
 		/**
 		 * @type {number}
 		 */
