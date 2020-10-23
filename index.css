@@ -171,19 +171,19 @@ nav a.open {
 	filter: hue-rotate(calc(-136deg + var(--hue-angle)));
 	transition: filter .3s ease-in-out;
 	z-index: 1;
-	margin-right: -16px;
-	margin-left: -2px;
+	margin-right: -1em;
+	margin-left: -0.1em;
 }
 
 .edit + span {
 	position: relative;
-	padding-bottom: 8px;
-	padding-left: 16px;
+	padding-bottom: 0.2em;
+	padding-left: 0.5em;
 }
 
 .edit:hover + span, .edit:focus + span {
 	background: #0005;
-	box-shadow: 12px 0 0 #0005, -12px 0 0 #0005;
+	box-shadow: 0.25em 0 0 #0005, -0.25em 0 0 #0005;
 }
 
 /* .edit:hover + span::before, .edit:focus + span::before {
