@@ -54,7 +54,7 @@ function toggleAside (target) {
  */
 async function copy (event) {
 	const copyTarget = element(event);
-	if (!copyTarget || copyTarget.closest("a, dialog"))
+	if (!copyTarget || copyTarget.closest(".edit, dialog"))
 		return;
 
 	await navigator.clipboard.writeText(copyTarget.textContent || "");
