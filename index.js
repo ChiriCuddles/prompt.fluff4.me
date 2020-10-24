@@ -4,6 +4,8 @@ const copyLink = document.getElementById("copy");
 const footer = document.getElementsByTagName("footer")[0];
 const mainWrapper = document.getElementsByTagName("main")[0];
 const historySidebar = document.getElementById("history");
+const editSegmentDialog = dialog("edit-segment");
+const editSegmentOptions = document.getElementById("edit-segment-options");
 
 /**
  * @typedef {{ name?: string, options: string[] }} List
@@ -20,9 +22,9 @@ let prompts;
 	data = await fetch("data.json").then(response => response.json());
 	prompts = data.prompts.map(prompt => new InterpolatedText(prompt));
 
-	generate();
-	document.body.addEventListener("click", generate);
-	rerollLink?.addEventListener("click", generate);
+	generateNewPrompt();
+	document.body.addEventListener("click", onDocumentClick);
+	rerollLink?.addEventListener("click", generateNewPrompt);
 	copyLink?.addEventListener("click", copy);
 	for (const toggleLink of elements("[data-toggle]"))
 		toggleLink.addEventListener("click", toggleAside);
@@ -51,7 +53,11 @@ function toggleAside (target) {
  * @param {MouseEvent} event 
  */
 async function copy (event) {
-	await navigator.clipboard.writeText(element(event)?.textContent || "");
+	const copyTarget = element(event);
+	if (!copyTarget || copyTarget.closest("a, dialog"))
+		return;
+
+	await navigator.clipboard.writeText(copyTarget.textContent || "");
 
 	const notif = document.createElement("h4");
 	notif.classList.add("notification");
@@ -71,17 +77,33 @@ const promptHistory = [];
 /**
  * @param {MouseEvent} [event]
  */
-function generate (event) {
-	if (element(event)?.closest("a"))
+function onDocumentClick (event) {
+	const target = element(event);
+	if (!target)
 		return;
 
-	const prompt = choice(prompts).cloneRandom();
-	promptHistory.push(prompt);
+	if (target.closest("dialog") && !target.closest("form"))
+		editSegmentDialog?.close("");
+
+	else if (!target?.closest("a, dialog"))
+		generateNewPrompt();
+}
+
+function generateNewPrompt () {
+	const prompt = choice(prompts).clone(true);
 	renderPrompt(prompt);
+	addPromptToHistory(prompt);
+}
+
+/**
+ * @param {InterpolatedText} prompt 
+ */
+function addPromptToHistory (prompt) {
+	promptHistory.push(prompt);
 
 	const historyItem = document.createElement("a");
 	historyItem.href = "#";
-	historyItem.addEventListener("click", focusHistoryItem);
+	historyItem.addEventListener("click", onClickHistoryItem);
 	historyItem.textContent = sentence(prompt.compile());
 
 	historySidebar?.insertBefore(historyItem, historySidebar.firstChild);
@@ -96,8 +118,14 @@ function renderPrompt (prompt) {
 
 	setHue(prompt.randomNumber);
 	promptOutput.innerHTML = ""; // TODO perf
+	editableSegments.clear();
 	renderInterpolatedContent(promptOutput, prompt, true);
 }
+
+/**
+ * @type {Map<number | undefined, Randomiser>}
+ */
+const editableSegments = new Map();
 
 /**
  * @param {HTMLElement} wrapperElement
@@ -117,11 +145,15 @@ function renderInterpolatedContent (wrapperElement, segment, useSentenceCase = f
 	} else {
 		renderInterpolatedContent(segmentElement, segment.value, useSentenceCase);
 		if (segment instanceof Randomiser && segment.options.length > 1) {
+			const id = Math.random();
+			editableSegments.set(id, segment);
+
 			const editLink = document.createElement("a");
 			editLink.classList.add("edit");
 			editLink.href = "#";
 			editLink.innerHTML = "✏&#xFE0F;";
 			editLink.setAttribute("aria-label", `edit ${segment.name ?? `"${segmentElement.textContent}"`}`);
+			editLink.dataset.segmentId = `${id}`;
 			editLink.addEventListener("click", editRandomisedSegment);
 
 			const wrapperSegmentElement = document.createElement("span");
@@ -138,8 +170,14 @@ function renderInterpolatedContent (wrapperElement, segment, useSentenceCase = f
 /**
  * @param {Event} event 
  */
-function focusHistoryItem (event) {
-	const historyItemLink = element(event);
+function onClickHistoryItem (event) {
+	focusHistoryItem(element(event));
+}
+
+/**
+ * @param {Element | undefined} historyItemLink 
+ */
+function focusHistoryItem (historyItemLink) {
 	if (!historyItemLink?.parentElement)
 		return;
 
@@ -150,8 +188,88 @@ function focusHistoryItem (event) {
 	renderPrompt(prompt);
 }
 
-function editRandomisedSegment () {
-	throw new Error("Unimplemented");
+/**
+ * @type {number | undefined}
+ */
+let editingSegment;
+
+/**
+ * @param {MouseEvent} event 
+ */
+function editRandomisedSegment (event) {
+	if (!editSegmentDialog || !editSegmentOptions)
+		return;
+
+	editSegmentOptions.innerHTML = "";
+
+	editingSegment = Number(element(event)?.dataset.segmentId);
+	const segment = editableSegments.get(editingSegment);
+
+	const options = segment?.options
+		.map((option, index) => ({ option, index }))
+		.sort(({ option: a }, { option: b }) => compileSegment(a).localeCompare(compileSegment(b)))
+		?? [];
+	for (const { option, index } of options) {
+
+		const optionButton = document.createElement("button");
+		optionButton.type = "submit";
+		optionButton.value = `${index}`;
+		optionButton.textContent = compileSegment(option);
+
+		const li = document.createElement("li");
+		if (option === segment?.value) {
+			li.classList.add("selected");
+			optionButton.disabled = true;
+		}
+
+		li.appendChild(optionButton);
+		editSegmentOptions.appendChild(li);
+	}
+
+	editSegmentDialog.addEventListener("close", editRandomisedSegmentCloseDialog, { once: true });
+	editSegmentDialog.showModal();
+}
+
+function editRandomisedSegmentCloseDialog () {
+	if (!editSegmentDialog?.returnValue)
+		return;
+
+	const segmentId = editingSegment;
+	editingSegment = undefined;
+
+	const segment = editableSegments.get(segmentId);
+	if (!editSegmentDialog || !segment)
+		return;
+
+
+	const options = segment.options;
+	const selectedId = editSegmentDialog.returnValue;
+	const selectedOption = options[Number(selectedId)];
+	if (!selectedOption && typeof selectedOption !== "string") {
+		console.warn("Unable to find option for segment", segment.name || `"${compileSegment(segment)}"`, "with id", selectedId);
+		return;
+	}
+
+	const segmentElementWrapper = element(`[data-segment-id="${segmentId}"]`)?.closest(".editable-wrapper");
+	if (!segmentElementWrapper) {
+		console.warn("Unable to find editable segment being edited", segment.name || `"${compileSegment(segment)}"`);
+		return;
+	}
+
+	const currentPrompt = promptHistory[promptHistory.length - 1];
+	const historyItemLink = historySidebar?.firstElementChild;
+	if (!historyItemLink) {
+		console.warn("Unable to find history item link for current prompt:", currentPrompt.compile());
+		return;
+	}
+
+	// clone the current prompt and add it to the top of the history
+	addPromptToHistory(currentPrompt.clone(false));
+
+	// update the old prompt segment
+	segment.value = selectedOption;
+	focusHistoryItem(historyItemLink);
+	historyItemLink.textContent = sentence(currentPrompt.compile());
 }
 
 /**
@@ -261,6 +379,13 @@ function elements (selector) {
 }
 
 /**
+ * @param {string} id 
+ */
+function dialog (id) {
+	return /** @type {HTMLDialogElement | undefined} */ (document.getElementById(id));
+}
+
+/**
  * @param {number} ms
  */
 async function sleep (ms) {
@@ -268,7 +393,7 @@ async function sleep (ms) {
 }
 
 /**
- * @typedef {{ readonly value: Segment | string | (Segment | string)[], cloneRandom(): Segment }} Segment
+ * @typedef {{ readonly value: Segment | string | (Segment | string)[], clone(random: boolean): Segment }} Segment
  * @implements {Segment} 
  */
 class InterpolatedText {
@@ -348,10 +473,14 @@ class InterpolatedText {
 		return this._value;
 	}
 
-	cloneRandom () {
+	/**
+	 * @param {boolean} random 
+	 */
+	clone (random) {
 		const result = new InterpolatedText("");
-		result._value = cloneSegments(this.value);
+		result._value = cloneSegments(this.value, random);
 		result.length = this.length;
+		result.randomNumber = this.randomNumber;
 		return result;
 	}
 
@@ -384,20 +513,22 @@ function compileSegment (segment) {
 
 /**
  * @param {(Segment | string)[]} segments
+ * @param {boolean} random
  * @returns {(Segment | string)[]}
  */
-function cloneSegments (segments) {
-	return segments.map(cloneSegment);
+function cloneSegments (segments, random) {
+	return segments.map(segment => cloneSegment(segment, random));
 }
 
 /**
  * @template {string | Segment | (Segment | string)[]} T
  * @param {T} segment 
+ * @param {boolean} random
  */
-function cloneSegment (segment) {
+function cloneSegment (segment, random) {
 	return /** @type {T} */ (typeof segment === "string" ? segment
-		: Array.isArray(segment) ? cloneSegments(/** @type {(Segment | string)[]} */(segment))
-			: (/** @type {Segment} */ (segment)).cloneRandom());
+		: Array.isArray(segment) ? cloneSegments(/** @type {(Segment | string)[]} */(segment), random)
+			: (/** @type {Segment} */ (segment)).clone(random));
 }
 
 /**
@@ -428,8 +559,14 @@ class Randomiser {
 		return this.value = choice(this.options);
 	}
 
-	cloneRandom () {
-		return new Randomiser(this.options.map(cloneSegment), this.name);
+	/**
+	 * @param {boolean} random 
+	 */
+	clone (random) {
+		const result = new Randomiser(this.options.map(option => cloneSegment(option, random)), this.name);
+		if (!random)
+			result.value = result.options[this.options.indexOf(this.value)];
+		return result;
 	}
 }
 
