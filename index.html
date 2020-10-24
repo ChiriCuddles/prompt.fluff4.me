@@ -2,6 +2,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="index.css">
 <link rel="icon" href="https://fluff4.me/img/logos/flag/logo.png" />
+
+<nav>
+	<a data-toggle="history" href="#">History</a>
+	<!--a data-toggle="editor" href="#">Editor</a-->
+</nav>
 <main>
 	<article>
 		<a id="copy" href="#" aria-label="Copy to clipboard"><h1 id="prompt"></h1></a>
@@ -9,11 +14,18 @@
 		<a id="reroll" href="#" aria-label="Reroll"></a>
 	</article>
 	<aside id="history"></aside>
+	<!--aside id="editor"></aside-->
 	<footer></footer>
-	<a id="view-history" href="#">History</a>
 </main>
 <footer>
 	<p>Made by Chiri &nbsp; 🤍 &nbsp; <a href="https://github.com/ChiriCuddles/prompt.fluff4.me">Source Code</a></p>
 	<p><h5>Prompts by contributors!</h5></p>
 </footer>
+
+<dialog id="edit-segment">
+	<form method="dialog">
+		<ul id="edit-segment-options"></ul>
+	</form>
+</dialog>
+
 <script src="index.js"></script>
