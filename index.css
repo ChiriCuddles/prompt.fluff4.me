@@ -162,7 +162,7 @@ nav a.open {
 .editable-wrapper {
 	/* display: inline-flex;
 	flex-direction: row-reverse; */
-	vertical-align: top;
+	/* vertical-align: top; */
 	position: relative;
 }
 
@@ -309,6 +309,10 @@ dialog::backdrop {
 	background: #0002;
 	opacity: 0.6;
 	cursor: default;
+}
+
+#edit-segment-options .empty {
+	opacity: 0.4;
 }
 
 #edit-segment-options > li {

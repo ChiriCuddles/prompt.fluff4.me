@@ -215,6 +215,12 @@ function editRandomisedSegment (event) {
 		optionButton.type = "submit";
 		optionButton.value = `${index}`;
 		optionButton.textContent = compileSegment(option);
+		if (optionButton.textContent === "") {
+			const emptyTextLabel = document.createElement("span");
+			emptyTextLabel.classList.add("empty");
+			emptyTextLabel.textContent = "(no text)";
+			optionButton.appendChild(emptyTextLabel);
+		}
 
 		const li = document.createElement("li");
 		if (option === segment?.value) {
@@ -480,7 +486,9 @@ class InterpolatedText {
 		const result = new InterpolatedText("");
 		result._value = cloneSegments(this.value, random);
 		result.length = this.length;
-		result.randomNumber = this.randomNumber;
+		if (!random)
+			result.randomNumber = this.randomNumber;
+
 		return result;
 	}
 
