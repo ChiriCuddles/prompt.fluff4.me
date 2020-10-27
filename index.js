@@ -23,6 +23,7 @@ let prompts;
 	prompts = data.prompts.map(prompt => new InterpolatedText(prompt));
 
 	generateNewPrompt();
+	document.body.addEventListener("mousedown", onDocumentMouseDown);
 	document.body.addEventListener("click", onDocumentClick);
 	rerollLink?.addEventListener("click", generateNewPrompt);
 	copyLink?.addEventListener("click", copy);
@@ -75,6 +76,15 @@ async function copy (event) {
 const promptHistory = [];
 
 /**
+ * @type {Element | null}
+ */
+let lastFocusedElement = null;
+
+function onDocumentMouseDown () {
+	lastFocusedElement = document.activeElement;
+}
+
+/**
  * @param {MouseEvent} [event]
  */
 function onDocumentClick (event) {
@@ -82,11 +92,15 @@ function onDocumentClick (event) {
 	if (!target)
 		return;
 
-	if (target.closest("dialog") && !target.closest("form"))
-		editSegmentDialog?.close("");
+	if (lastFocusedElement === document.body) {
+		if (target.closest("dialog") && !target.closest("form"))
+			editSegmentDialog?.close("");
 
-	else if (!target?.closest("a, dialog"))
-		generateNewPrompt();
+		else if (!target?.closest("a, dialog, details") && lastFocusedElement === document.body)
+			generateNewPrompt();
+	}
+
+	lastFocusedElement = null;
 }
 
 function generateNewPrompt () {
