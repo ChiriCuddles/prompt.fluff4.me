@@ -51,6 +51,15 @@ a:hover {
 	padding: 8px;
 }
 
+#prompt, #hint {
+	animation: fade-in .5s ease-out forwards;
+}
+
+@keyframes fade-in {
+	from { opacity: 0; }
+	to { opacity: var(--opacity, 1); }
+}
+
 h1 {
 	font-weight: 200;
 }
@@ -61,7 +70,8 @@ h3 {
 
 h5 {
 	font-weight: 400;
-	opacity: 0.6;
+	--opacity: 0.6;
+	opacity: var(--opacity);
 }
 
 #reroll {
