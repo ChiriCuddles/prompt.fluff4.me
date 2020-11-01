@@ -1,6 +1,7 @@
 <title>Trans prompts by trans people! How positively fluffy!</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="/node_modules/dialog-polyfill/dist/dialog-polyfill.css">
+<link rel="stylesheet" href="/index.css">
 <link rel="icon" href="https://fluff4.me/img/logos/flag/logo.png" />
 
 <nav>
@@ -9,12 +10,20 @@
 </nav>
 <main>
 	<article>
-		<a id="copy" href="#" aria-label="Copy to clipboard"><h1 id="prompt"></h1></a>
+		<a id="copy" href="#" aria-label="Copy to clipboard"><h1 id="prompt">Loading... if nothing happens, make sure JavaScript is enabled.</h1></a>
 		<h5 id="hint">Click the prompt to copy to clipboard, click elsewhere to reroll!</h5>
 		<a id="reroll" href="#" aria-label="Reroll"></a>
 	</article>
 	<aside id="history"></aside>
-	<!--aside id="editor"></aside-->
+	<aside id="editor">
+		<details>
+			<summary class="button">Prompts</summary>
+			<ul id="prompts"></ul>
+			<a id="add-prompt" class="button inline-block" href="#"><span class="emoji is-greyscale is-bright">➕</span> New Prompt</a>
+		</details>
+		<h2>Lists</h2>
+		<ul id="lists"></ul>
+	</aside>
 	<footer></footer>
 </main>
 <footer>
@@ -22,10 +31,12 @@
 	<p><h5>Prompts by contributors!</h5></p>
 </footer>
 
-<dialog id="edit-segment">
+<dialog id="dialog-options">
 	<form method="dialog">
-		<ul id="edit-segment-options"></ul>
+		<ul id="dialog-options-list"></ul>
 	</form>
 </dialog>
 
-<script src="index.js"></script>
+<script src="/node_modules/focus-visible/dist/focus-visible.min.js"></script>
+<script src="/node_modules/dialog-polyfill/dist/dialog-polyfill.js"></script>
+<script src="/index.js"></script>

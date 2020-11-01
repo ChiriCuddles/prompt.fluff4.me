@@ -2,5 +2,9 @@
 	"private": true,
 	"scripts": {
 		"server": "npx http-server -c10"
+	},
+	"dependencies": {
+		"focus-visible": "5.1.0",
+		"dialog-polyfill": "0.5.3"
 	}
 }
