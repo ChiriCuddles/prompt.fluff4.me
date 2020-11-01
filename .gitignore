@@ -1,0 +1,17 @@
+# ignore all node_modules files by default
+node_modules/*
+
+# unignore focus-visible.min.js
+!node_modules/focus-visible
+node_modules/focus-visible/*
+!node_modules/focus-visible/dist/
+node_modules/focus-visible/dist/*
+!node_modules/focus-visible/dist/focus-visible.min.js
+
+# unignore dialog-polyfill.js, dialog-polyfill.css
+!node_modules/dialog-polyfill
+node_modules/dialog-polyfill/*
+!node_modules/dialog-polyfill/dist/
+node_modules/dialog-polyfill/dist/*
+!node_modules/dialog-polyfill/dist/dialog-polyfill.js
+!node_modules/dialog-polyfill/dist/dialog-polyfill.css

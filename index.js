@@ -4,8 +4,9 @@ const copyLink = document.getElementById("copy");
 const footer = document.getElementsByTagName("footer")[0];
 const mainWrapper = document.getElementsByTagName("main")[0];
 const historySidebar = document.getElementById("history");
-const editSegmentDialog = dialog("edit-segment");
-const editSegmentOptions = document.getElementById("edit-segment-options");
+const optionsDialog = dialog("dialog-options");
+/** @type {any} */ (window).dialogPolyfill.registerDialog(optionsDialog);
+const optionsDialogList = document.getElementById("dialog-options-list");
 
 /**
  * @typedef {{ name?: string, options: string[] }} List
@@ -14,12 +15,16 @@ const editSegmentOptions = document.getElementById("edit-segment-options");
  */
 let data;
 /**
+ * @type {Data}
+ */
+let originalData;
+/**
  * @type {InterpolatedText[]}
  */
 let prompts;
 
 (async function () {
-	data = await fetch("data.json").then(response => response.json());
+	originalData = data = await fetch("data.json").then(response => response.json());
 	prompts = data.prompts.map(prompt => new InterpolatedText(prompt));
 
 	generateNewPrompt();
@@ -29,6 +34,8 @@ let prompts;
 	copyLink?.addEventListener("click", copy);
 	for (const toggleLink of elements("[data-toggle]"))
 		toggleLink.addEventListener("click", toggleAside);
+
+	initialiseEditor();
 })();
 
 /**
@@ -92,13 +99,11 @@ function onDocumentClick (event) {
 	if (!target)
 		return;
 
-	if (lastFocusedElement === document.body) {
-		if (target.closest("dialog") && !target.closest("form"))
-			editSegmentDialog?.close("");
+	if (target.closest("dialog") && !target.closest("form"))
+		optionsDialog?.close("");
 
-		else if (!target?.closest("a, dialog, details") && lastFocusedElement === document.body)
-			generateNewPrompt();
-	}
+	else if (!target?.closest("a, dialog, details") && lastFocusedElement === document.body)
+		generateNewPrompt();
 
 	lastFocusedElement = null;
 }
@@ -165,7 +170,12 @@ function renderInterpolatedContent (wrapperElement, segment, useSentenceCase = f
 			const editLink = document.createElement("a");
 			editLink.classList.add("edit");
 			editLink.href = "#";
-			editLink.innerHTML = "✏&#xFE0F;";
+
+			const span = document.createElement("span");
+			span.innerHTML = "✏&#xFE0F;";
+			span.classList.add("emoji");
+			editLink.appendChild(span);
+
 			editLink.setAttribute("aria-label", `edit ${segment.name ?? `"${segmentElement.textContent}"`}`);
 			editLink.dataset.segmentId = `${id}`;
 			editLink.addEventListener("click", editRandomisedSegment);
@@ -211,12 +221,17 @@ let editingSegment;
  * @param {MouseEvent} event 
  */
 function editRandomisedSegment (event) {
-	if (!editSegmentDialog || !editSegmentOptions)
+	if (!optionsDialog || !optionsDialogList)
 		return;
 
-	editSegmentOptions.innerHTML = "";
+	optionsDialogList.innerHTML = "";
 
-	editingSegment = Number(element(event)?.dataset.segmentId);
+	/**
+	 * @type {HTMLAnchorElement | null | undefined}
+	 */
+	const editLink = element(event)?.closest("a.edit");
+
+	editingSegment = Number(editLink?.dataset.segmentId);
 	const segment = editableSegments.get(editingSegment);
 
 	const options = segment?.options
@@ -243,27 +258,27 @@ function editRandomisedSegment (event) {
 		}
 
 		li.appendChild(optionButton);
-		editSegmentOptions.appendChild(li);
+		optionsDialogList.appendChild(li);
 	}
 
-	editSegmentDialog.addEventListener("close", editRandomisedSegmentCloseDialog, { once: true });
-	editSegmentDialog.showModal();
+	optionsDialog.addEventListener("close", editRandomisedSegmentCloseDialog, { once: true });
+	optionsDialog.showModal();
 }
 
 function editRandomisedSegmentCloseDialog () {
-	if (!editSegmentDialog?.returnValue)
+	if (!optionsDialog?.returnValue)
 		return;
 
 	const segmentId = editingSegment;
 	editingSegment = undefined;
 
 	const segment = editableSegments.get(segmentId);
-	if (!editSegmentDialog || !segment)
+	if (!optionsDialog || !segment)
 		return;
 
 
 	const options = segment.options;
-	const selectedId = editSegmentDialog.returnValue;
+	const selectedId = optionsDialog.returnValue;
 	const selectedOption = options[Number(selectedId)];
 	if (!selectedOption && typeof selectedOption !== "string") {
 		console.warn("Unable to find option for segment", segment.name || `"${compileSegment(segment)}"`, "with id", selectedId);
@@ -611,4 +626,349 @@ function parseOptions (str, i) {
 	}
 
 	return { options, i };
+}
+
+
+////////////////////////////////////
+// Editor
+//
+
+const promptsWrapper = document.getElementById("prompts");
+const listsWrapper = document.getElementById("lists");
+const addPromptLink = document.getElementById("add-prompt");
+
+addPromptLink?.addEventListener("click", () =>
+	promptsWrapper?.appendChild(li(createEditableText())));
+
+function initialiseEditor () {
+	for (const prompt of data.prompts)
+		promptsWrapper?.appendChild(li(createEditableText(prompt)));
+
+	for (const [listId, list] of Object.entries(data.lists)) {
+		const detailsElement = document.createElement("details");
+		detailsElement.appendChild(summary(list.name || listId));
+
+		const listElement = document.createElement("ul");
+		detailsElement.appendChild(listElement);
+
+		for (const option of list.options)
+			listElement?.appendChild(li(createEditableText(option)));
+
+		const addOptionLink = document.createElement("a");
+		addOptionLink.classList.add("button", "inline-block");
+		addOptionLink.href = "#";
+
+		const addOptionLinkEmoji = document.createElement("span");
+		addOptionLinkEmoji.classList.add("emoji", "is-greyscale", "is-bright");
+		addOptionLinkEmoji.textContent = "➕";
+
+		addOptionLink.append(addOptionLinkEmoji, " New Option");
+		detailsElement.appendChild(addOptionLink);
+
+		listsWrapper?.appendChild(detailsElement);
+	}
+}
+
+/**
+ * @param {string} [text]
+ */
+function createEditableText (text) {
+	const editor = document.createElement("div");
+	editor.setAttribute("contenteditable", "");
+	editor.addEventListener("click", editIncludeInterpolation);
+	editor.addEventListener("keydown", editInterpolation);
+
+	if (text)
+		insertEditableContent(editor, text);
+
+	return editor;
+}
+
+/**
+ * @param {KeyboardEvent} event 
+ */
+function editInterpolation (event) {
+	const selection = window.getSelection();
+	switch (event.key) {
+		case "{": {
+			const interpolation = classed(span(), "interpolation");
+			interpolation.dataset.type = "oneof";
+			interpolation.textContent = "\u200B";
+			selection?.getRangeAt(0).insertNode(document.createTextNode("\u200B"));
+			selection?.getRangeAt(0).insertNode(interpolation);
+			selection?.selectAllChildren(interpolation);
+			event.preventDefault();
+			return false;
+		}
+		case "|": {
+			const punctuation = classed(span(), "punctuation");
+			punctuation.dataset.type = "|";
+			punctuation.setAttribute("contenteditable", "false");
+			handleSelectionChange = false;
+			const textNode = document.createTextNode("\u200B");
+			selection?.getRangeAt(0).insertNode(textNode);
+			selection?.getRangeAt(0).insertNode(punctuation);
+			if (punctuation.nextSibling)
+				selection?.getRangeAt(0).selectNode(textNode);
+			handleSelectionChange = true;
+			event.preventDefault();
+			return false;
+		}
+		// case "ArrowLeft":
+		// 	if (selection?.anchorOffset === 1 && closestElement(selection.anchorNode)?.previousElementSibling?.classList.contains("interpolation")) {
+		// 		if (!selection.anchorNode || !selection.focusNode)
+		// 			return;
+
+		// 		selection.setBaseAndExtent(selection.anchorNode, 0, event.shiftKey ? selection.focusNode : selection.anchorNode, event.shiftKey ? selection.focusOffset : 0);
+		// 		event.preventDefault();
+		// 		return false;
+		// 	}
+	}
+}
+
+let handleSelectionChange = true;
+document.addEventListener("selectionchange", () => {
+	if (!handleSelectionChange)
+		return;
+
+	for (const focusedInterpolation of document.querySelectorAll(".interpolation.focus"))
+		focusedInterpolation.classList.remove("focus");
+
+	const selection = document.getSelection();
+	const element = closestElement(selection?.isCollapsed || selection?.focusNode === selection?.anchorNode ? selection?.focusNode : null);
+	element?.closest(".interpolation")?.classList.add("focus");
+
+	let cursor = selection?.anchorNode?.parentNode?.lastChild;
+	while (cursor = cursor?.previousSibling)
+		if (cursor?.textContent?.endsWith("\u200B"))
+			if (cursor.nextSibling?.textContent === "\u200B")
+				cursor.nextSibling.remove();
+			else if (cursor?.textContent?.length > 1)
+				cursor.textContent = cursor.textContent.replace(/\u200B+$/, "");
+
+	// if (selection?.isCollapsed) {
+	// 	if (closestElement(selection?.anchorNode)?.classList.contains("punctuation") && selection?.anchorNode?.parentElement)
+	// 		selection?.setBaseAndExtent(selection.anchorNode.parentElement, 0, selection.anchorNode.parentElement, 0);
+
+	// } else {
+	// 	if (closestElement(selection?.anchorNode)?.classList.contains("punctuation") && selection?.anchorNode?.parentElement)
+	// 		selection?.getRangeAt(0).setStart(selection.anchorNode.parentElement, 0);
+
+	// 	if (closestElement(selection?.focusNode)?.classList.contains("punctuation") && selection?.focusNode?.parentElement)
+	// 		selection?.getRangeAt(0).setStart(selection.focusNode.parentElement, 0);
+	// }
+});
+
+/**
+ * @type {Element | undefined}
+ */
+let editingInterpolation;
+/**
+ * @param {MouseEvent} event 
+ */
+function editIncludeInterpolation (event) {
+	if (!optionsDialog || !optionsDialogList)
+		return;
+
+	if (event.ctrlKey)
+		return;
+
+	const interpolation = element(event)?.closest(".interpolation[data-type='include']");
+	if (!interpolation)
+		return;
+
+	editingInterpolation = interpolation;
+
+	const currentInclude = interpolation.textContent;
+
+	optionsDialogList.innerHTML = "";
+
+	const options = Object.keys(data.lists);
+	for (const option of options) {
+
+		const optionButton = document.createElement("button");
+		optionButton.type = "submit";
+		optionButton.value = option;
+		optionButton.textContent = data.lists[option].name || option;
+
+		const li = document.createElement("li");
+		if (option === currentInclude) {
+			li.classList.add("selected");
+			optionButton.disabled = true;
+		}
+
+		li.appendChild(optionButton);
+		optionsDialogList.appendChild(li);
+	}
+
+	optionsDialog.addEventListener("close", editIncludeInterpolationCloseDialog, { once: true });
+	optionsDialog.showModal();
+}
+
+function editIncludeInterpolationCloseDialog () {
+	if (!optionsDialog?.returnValue)
+		return;
+
+	const selectedOption = optionsDialog.returnValue;
+	if (!selectedOption || !data.lists[selectedOption] || !editingInterpolation)
+		return;
+
+	editingInterpolation.textContent = optionsDialog.returnValue;
+	editingInterpolation = undefined;
+}
+
+/**
+ * @param {Element} element
+ * @param {string} text
+ * @param {number} i
+ */
+function insertEditableContent (element, text, i = 0, endChars = "}") {
+	/**
+	 * @type {Node | undefined}
+	 */
+	let currentNode;
+	for (; i < text.length; i++) {
+		if (endChars.includes(text[i]))
+			break;
+
+		if (text[i] === "{") {
+			/**
+			 * @type {HTMLElement}
+			 */
+			let interpolation;
+			({ interpolation, i } = createEditableInterpolation(text, ++i));
+			element.appendChild(currentNode = interpolation);
+		}
+
+		if (currentNode?.nodeType !== Node.TEXT_NODE)
+			element.appendChild(currentNode = document.createTextNode(""));
+
+		if (text[i])
+			currentNode.textContent += text[i];
+	}
+
+	return i;
+}
+
+/**
+ * @param {string} text 
+ * @param {number} i
+ */
+function createEditableInterpolation (text, i) {
+	const interpolation = document.createElement("span");
+	interpolation.classList.add("interpolation");
+	// const startPunctuation = attributed(classed(span(), "punctuation"), "data-type", "{");
+	// interpolation.appendChild(startPunctuation);
+
+	if (text[i] === "?") {
+		// startPunctuation.dataset.type = "{?";
+		i++;
+		interpolation.dataset.type = "potential";
+
+	} else if (text[i] === "#") {
+		// startPunctuation.dataset.type = "{#";
+		i++;
+		interpolation.dataset.type = "include";
+		interpolation.classList.add("clickable");
+
+	} else {
+		interpolation.dataset.type = "oneof";
+		while (text[i - 1] !== "}" && i < text.length) {
+			i = insertEditableContent(interpolation, text, i, "}|");
+			if (text[i] === "|")
+				interpolation.appendChild(attributed(classed(span(), "punctuation"), "data-type", "|"));
+			i++;
+		}
+	}
+
+	if (interpolation.dataset.type !== "oneof") {
+		i = insertEditableContent(interpolation, text, i);
+		// if (text[i])
+		// 	interpolation.appendChild(attributed(classed(span(), "punctuation"), "data-type", text[i]));
+		i++;
+	}
+
+	return { interpolation, i };
+}
+
+/**
+ * 
+ * @param  {...string | Element} contents
+ */
+function li (...contents) {
+	const li = document.createElement("li");
+	li.append(...contents);
+	return li;
+}
+
+/**
+ * 
+ * @param  {...string | Element} contents 
+ */
+function span (...contents) {
+	const span = document.createElement("span");
+	span.append(...contents);
+	return span;
+}
+
+/**
+ * 
+ * @param  {...string | Element} contents 
+ */
+function summary (...contents) {
+	const summary = document.createElement("summary");
+	summary.classList.add("button");
+	summary.append(...contents);
+	return summary;
+}
+
+/**
+ * @template {Element} T
+ * @param {T} element 
+ * @param {...string} classes 
+ * @returns {T}
+ */
+function classed (element, ...classes) {
+	element.classList.add(...classes);
+	return element;
+}
+
+/**
+ * @template {Element} T
+ * @param {T} element 
+ * @param {string} attr
+ * @returns {T}
+ */
+function attributed (element, attr, val = "") {
+	element.setAttribute(attr, val);
+	return element;
+}
+
+/**
+ * @param {Node | null | undefined} [node]
+ */
+function asElement (node) {
+	return node?.nodeType === Node.ELEMENT_NODE ? /** @type {HTMLElement} */ (node) : undefined;
+}
+
+/**
+ * @param {Node | null | undefined} [node]
+ */
+function closestElement (node) {
+	do {
+		const element = asElement(node);
+		if (element)
+			return element;
+	} while (node = node?.parentNode);
+
+	return undefined;
+}
+
+/**
+ * @param {Node} node 
+ * @param {Node} parent 
+ */
+function appendedTo (node, parent) {
+	parent.appendChild(node);
+	return node;
 }
