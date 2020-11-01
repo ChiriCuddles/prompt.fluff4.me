@@ -3,7 +3,7 @@
 		"In {#setting}, {#character} {#method} and becomes {#form}.",
 		"{#character} in {#setting} {#method}, becoming {#form}.",
 		"{#character} and {#character} in {#setting} {#method}, each becoming {#form}.",
-		"{#character}, {#character}, and {#character} in {#setting} {#method}, becoming {#form}, {#form}, and {#form}, respectively.",
+		"The setting: {#setting}. The characters: {#character}, {#character}, and {#character}. Someone {#method}... then they become {#form}, {#form}, and {#form}, respectively.",
 		"{#character} {#method} and is isekai'd as a result, becoming {#form} in {#setting}.",
 		"{#character} is reincarnated into {#setting}, then {#method} and becomes {#form}."
 	],
