@@ -238,7 +238,11 @@ nav a.open {
 	padding-left: 0.5em;
 }
 
-.edit:hover + span, .edit:focus-visible + span {
+.edit:hover + span {
+	background: #0005;
+	box-shadow: 0.25em 0 0 #0005, -0.25em 0 0 #0005;
+}
+.edit:focus-visible + span {
 	background: #0005;
 	box-shadow: 0.25em 0 0 #0005, -0.25em 0 0 #0005;
 }
@@ -344,7 +348,11 @@ dialog::backdrop, dialog + .backdrop {
     outline: none;
 }
 
-#dialog-options-list button:not(:disabled):hover,
+#dialog-options-list button:not(:disabled):hover {
+    color: var(--hover-color);
+    transition-duration: .1s;
+    background: #0002;
+}
 #dialog-options-list button:not(:disabled):focus-visible {
     color: var(--hover-color);
     transition-duration: .1s;
@@ -426,7 +434,12 @@ details:hover, details:focus-within {
 	padding: 0.1em 0.5em 0.25em;
 }
 
-.button:hover, .button:focus-visible {
+.button:hover {
+    color: var(--hover-color);
+    cursor: pointer;
+    background: #0003;
+}
+.button:focus-visible {
     color: var(--hover-color);
     cursor: pointer;
     background: #0003;
@@ -437,7 +450,10 @@ summary {
 	opacity: 0.5;
 }
 
-summary:hover, summary:focus-visible, details[open] > summary {
+summary:hover, details[open] > summary {
+	opacity: 1;
+}
+summary:focus-visible {
 	opacity: 1;
 }
 
