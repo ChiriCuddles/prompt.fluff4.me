@@ -62,10 +62,10 @@ function toggleAside (target) {
  */
 async function copy (event) {
 	const copyTarget = element(event);
-	if (!copyTarget || copyTarget.closest(".edit, dialog"))
+	if (copyTarget?.closest(".edit, dialog") || !promptOutput)
 		return;
 
-	await navigator.clipboard.writeText(copyTarget.textContent || "");
+	await navigator.clipboard.writeText(promptOutput.textContent?.replace(/✏️/g, "") || "");
 
 	const notif = document.createElement("h4");
 	notif.classList.add("notification");
