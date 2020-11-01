@@ -1,28 +1,47 @@
 {
 	"prompts": [
 		"In {#setting}, {#character} {#method} and becomes {#form}.",
-		"{#character} in {#setting} {#method} and is isekai'd as a result, becoming {#form} in {#setting}."
+		"{#character} {#method} and is isekai'd as a result, becoming {#form} in {#setting}.",
+		"{#character} is reincarnated into {#setting}, then {#method} and becomes {#form}."
 	],
 	"lists": {
 		"setting": {
 			"name": "Setting",
 			"options": [
 				"a cyberpunk dystopia",
-				"a ghost town in the middle of the desert",
+				"a ghost town",
 				"a generic suburb",
-				"the middle of the ocean",
+				"the ocean",
 				"a college campus",
 				"the big city",
-				"an abandoned mansion",
-				"an intelligent spaceship",
+				"{an abandoned|an inherited|a haunted} mansion",
+				"{an intelligent|a} spaceship",
 				"a deserted island",
 				"an imposing castle",
 				"a dragon's lair",
 				"a galaxy far, far away",
 				"an average high school",
-				"a city of superheroes",
 				"a parallel universe",
-				"a VRMMO"
+				"a VRMMO",
+				"a utopia",
+				"a medieval slum",
+				"a peasant village",
+				"a space station",
+				"a farm",
+				"an underwater {#location}",
+				"a futuristic {#location}",
+				"a destroyed {#location}",
+				"an underground {#location}",
+				"a {#location} in space",
+				"a {#location} on the moon",
+				"an {?abandoned} amusement park",
+				"a hospital",
+				"an orphanage",
+				"the streets",
+				"the basement",
+				"the circus",
+				"a {#location} of {#peoples}",
+				"the secret hidden world"
 			]
 		},
 		"character": {
@@ -30,8 +49,8 @@
 			"options": [
 				"a miserable accountant",
 				"a happy-go-lucky balloon salesman",
-				"a professional minecrafter",
-				"the most depressed teenager you have literally ever seen",
+				"a vlogger",
+				"the most depressed teenager ever",
 				"a bisexual computer programmer",
 				"a conservative pundit",
 				"a closeted middle-aged crossdresser",
@@ -40,15 +59,30 @@
 				"a constantly daydreaming weeb",
 				"a shy college freshman",
 				"an elderly person near the end of their life",
-				"an internet troll",
+				"a troll",
 				"an annoying younger sibling",
 				"an androgynous teen with a beautiful singing voice",
 				"a grizzled veteran adventurer",
-				"a superhero vigilante",
-				"a baby-faced cowboy or cowgirl",
-				"an ordinary, unremarkable high schooler with a plain face and black hair",
-				"an inexperienced spellcaster",
-				"a monster-slaying paladin"
+				"a superhero",
+				"a vigilante",
+				"a villain",
+				"a baby-faced cowhand",
+				"an unremarkable high schooler with a plain face and black hair",
+				"an {inexperienced|expert} spellcaster",
+				"a monster-slaying paladin",
+				"a parent of too many children",
+				"a dreamer",
+				"an adult in a mid-life crisis",
+				"a warrior",
+				"a soldier",
+				"a veteran",
+				"an aggressive CEO",
+				"a cheerleader",
+				"a {teacher|professor}",
+				"a dog-groomer",
+				"a baby-sitter",
+				"an intern",
+				"a shitty bigot that deserves to get punched"
 			]
 		},
 		"method": {
@@ -59,7 +93,7 @@
 				"plays too many video games",
 				"gets bitten by a vampire",
 				"falls into a vat of toxic waste",
-				"wears affirming clothes as 'crossdressing' one too many times",
+				"'crossdresses' one too many times",
 				"is slowly transformed by magic",
 				"starts taking hormones",
 				"crossdresses because of a bet",
@@ -67,10 +101,22 @@
 				"accidentally takes the wrong potion",
 				"puts on a high-tech bodysuit",
 				"accidentally gets the wrong surgery",
-				"is transformed by a goddess",
 				"gets magicked by a summoned succubus",
 				"wears a magical amulet",
-				"uploads their consciousness"
+				"uploads their consciousness",
+				"is the test subject of a new drug",
+				"is dumped by their lover",
+				"has amnesia about a mysterious event",
+				"gets a cruel and unusual punishment",
+				"builds a machine to grant wishes",
+				"falls ill to a rare disease",
+				"makes a huge mistake",
+				"insults a {mage|witch|wizard|god|goddess}",
+				"complements a {mage|witch|wizard|god|goddess}",
+				"discovers a strange genetic condition",
+				"makes a wish",
+				"learns the secrets of magic",
+				"gains superpowers"
 			]
 		},
 		"form": {
@@ -86,13 +132,47 @@
 				"an AI",
 				"an ordinary human of the opposite assigned sex",
 				"a cheerleader",
-				"a sex robot",
+				"a {?sex }robot",
 				"the most beautiful person in the world",
 				"a housewife or househusband",
 				"a famous cosplayer",
 				"an e-girl or e-boy",
 				"an elf",
-				"an axoltol person"
+				"an axoltol person",
+				"an angel",
+				"a demon",
+				"a succubus",
+				"an elf",
+				"a dragonperson",
+				"a mage",
+				"a divine entity",
+				"a CEO",
+				"a raccoon person",
+				"an expert pilot",
+				"a superhero",
+				"a villain",
+				"a vigilante"
+			]
+		},
+		"location": {
+			"options": [
+				"town",
+				"city",
+				"orphanage",
+				"school",
+				"college",
+				"village",
+				"civilisation",
+				"lair",
+				"castle",
+				"ship"
+			]
+		},
+		"peoples": {
+			"options": [
+				"animal people",
+				"robot people",
+				"superheroes"
 			]
 		},
 		"height": {
